@@ -4,18 +4,33 @@ A self-hosted local LLM setup for AI-assisted coding. Runs open source models in
 
 ## Models
 
+All models are code-focused and run on consumer GPUs. Pick based on your available VRAM.
+
 | Model | VRAM (GPU) | RAM (CPU) | Notes |
 |---|---|---|---|
-| `glm-4` | ~8 GB | ~16 GB | Recommended default — practical on consumer hardware |
-| `qwen3-coder` | ~6 GB | ~12 GB | Code-specialized; recommended for coding-focused tasks |
-| `deepseek-v3` | ~80 GB | ~200 GB | High-end GPU required |
-| `minimax-m1` | ~40 GB | ~80 GB | Experimental — requires manual GGUF download |
+| `starcoder2-3b` | ~2 GB | ~4 GB | Smallest model — runs on almost any GPU |
+| `codellama-7b` | ~4 GB | ~8 GB | Meta CodeLlama 7B Instruct |
+| `codegemma-7b` | ~5 GB | ~10 GB | Google CodeGemma 7B Instruct (substitutes unavailable codestral-7b) |
+| `starcoder2-7b` | ~5 GB | ~8 GB | BigCode StarCoder2 7B |
+| `qwen3-coder` | ~6 GB | ~12 GB | Qwen3 Coder — strong code reasoning |
+| `glm-4` | ~8 GB | ~16 GB | General-purpose; reliable on 8 GB GPUs |
+| `deepseek-coder-lite` | ~10 GB | ~12 GB | DeepSeek-Coder-V2-Lite 16B MoE (2.4B active params) |
+| `starcoder2-15b` | ~10 GB | ~20 GB | BigCode StarCoder2 15B — best code quality in the set |
+
+### Hardware selection guide
+
+| GPU VRAM | Recommended models |
+|---|---|
+| 2–4 GB | `starcoder2-3b` |
+| 4–6 GB | `codellama-7b`, `codegemma-7b`, `starcoder2-7b` |
+| 6–8 GB | `qwen3-coder`, `glm-4` |
+| 10 GB+ | `deepseek-coder-lite`, `starcoder2-15b` |
 
 ## Prerequisites
 
 - **Docker Engine 24+** and **Docker Compose v2** — [Install Docker](https://docs.docker.com/engine/install/)
 - **GPU (optional)**: NVIDIA GPU + NVIDIA Container Toolkit
-- **Disk space**: 6–200 GB depending on model (downloaded on first provision)
+- **Disk space**: 2–20 GB depending on model (downloaded on first provision)
 - **Internet**: Required on first run to pull Docker image and model weights
 
 ### Install NVIDIA Container Toolkit (GPU only, Ubuntu/Debian)
@@ -60,7 +75,7 @@ curl http://localhost:11434/v1/models
 ### provision.sh options
 
 ```
--m MODEL      Model name: glm-4 | qwen3-coder | deepseek-v3 | minimax-m1
+-m MODEL      Model name: see Models table above for supported values
 -M MODE       gpu | cpu | auto (default: auto — detects GPU)
 -p PORT       Host port (default: 11434)
 -g GPU_ID     NVIDIA device index (default: 0)
@@ -85,7 +100,7 @@ Ready-to-use config files are in [`examples/`](examples/):
 
 | Agent | Config file | Instructions |
 |---|---|---|
-| OpenCode | [`examples/opencode/config.toml`](examples/opencode/config.toml) | Copy to `~/.config/opencode/config.toml` |
+| OpenCode | [`examples/opencode/config.json`](examples/opencode/config.json) | Copy to `~/.config/opencode/config.json` |
 | Continue | [`examples/continue/config.json`](examples/continue/config.json) | Merge into `~/.continue/config.json` |
 | Aider | [`examples/aider/.aider.conf.yml`](examples/aider/.aider.conf.yml) | Copy to project root as `.aider.conf.yml` |
 
@@ -127,10 +142,14 @@ The `-V` flag selects a pre-set configuration tuned for your GPU memory budget. 
 
 | Model | Min tier | Notes |
 |-------|----------|-------|
-| `glm-4` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `starcoder2-3b` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `codellama-7b` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `codegemma-7b` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `starcoder2-7b` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
 | `qwen3-coder` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
-| `minimax-m1` | `24gb` | User must provide GGUF manually (see section below) |
-| `deepseek-v3` | `32gb` | ~400 GB GGUF — significant download and storage required |
+| `glm-4` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `deepseek-coder-lite` | `16gb` | 16B MoE model — all weights must be resident (~10 GB) |
+| `starcoder2-15b` | `16gb` | GGUF auto-downloaded from HuggingFace on first run |
 
 ### API endpoint with llama.cpp
 
@@ -138,26 +157,18 @@ The API endpoint is identical: `http://localhost:11434/v1`. The model `id` retur
 
 | Model | Ollama id | llama.cpp id |
 |-------|-----------|--------------|
-| `glm-4` | `glm4:latest` | `glm-4-9b-chat-Q4_K_M` |
+| `starcoder2-3b` | `starcoder2:3b` | `starcoder2-3b-Q4_K_M` |
+| `codellama-7b` | `codellama:7b-instruct` | `CodeLlama-7B-Instruct.Q4_K_M` |
+| `codegemma-7b` | `codegemma:7b` | `codegemma-7b-it-Q4_K_M` |
+| `starcoder2-7b` | `starcoder2:7b` | `starcoder2-7b-Q4_K_M` |
 | `qwen3-coder` | `qwen3-coder:latest` | `Qwen3-Coder-Q4_K_M` |
-| `deepseek-v3` | `deepseek-v3:latest` | `DeepSeek-V3-Q4_K_M` |
-| `minimax-m1` | `minimax-m1:latest` | `minimax-m1` |
+| `glm-4` | `glm4:latest` | `glm-4-9b-chat-Q4_K_M` |
+| `deepseek-coder-lite` | `deepseek-coder-v2:16b-lite-instruct-q4_K_M` | `DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M` |
+| `starcoder2-15b` | `starcoder2:15b` | `starcoder2-15b-Q4_K_M` |
 
 Update your agent config's model name to match when switching backends.
 
 ---
-
-## MiniMax-M1 (Experimental)
-
-MiniMax-M1 requires a manual GGUF download (not in Ollama library):
-
-```bash
-# 1. Download a GGUF from HuggingFace (e.g., bartowski/MiniMax-M1-GGUF)
-# 2. Place the file in MODEL_CACHE_DIR (default: ~/.local/share/llm-models)
-cp minimax-m1.Q4_K_M.gguf ~/.local/share/llm-models/minimax-m1.gguf
-# 3. Provision
-./scripts/provision.sh -m minimax-m1
-```
 
 ## Troubleshooting
 

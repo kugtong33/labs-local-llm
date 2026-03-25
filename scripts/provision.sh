@@ -19,7 +19,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 REGISTRY="$PROJECT_DIR/models/registry.conf"
 VRAM_TIERS="$PROJECT_DIR/models/vram-tiers.conf"
-MODELFILE_DIR="$PROJECT_DIR/models"
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 MODEL_NAME=""
@@ -104,7 +103,6 @@ MIN_VRAM_TIER="$(echo "$REGISTRY_LINE" | awk -F'|' '{print $8}')"
 
 if [[ "$MODEL_STATUS" == "experimental" ]]; then
   echo "WARNING: '$MODEL_NAME' is an experimental model. Stability is not guaranteed." >&2
-  echo "         See models/minimax-m1.Modelfile for setup requirements." >&2
 fi
 
 # ── Validation: mode flag ─────────────────────────────────────────────────────
@@ -194,18 +192,6 @@ if [[ ! -d "$MODEL_CACHE_DIR" ]]; then
     echo "ERROR: Cannot create $MODEL_CACHE_DIR. Try: sudo mkdir -p $MODEL_CACHE_DIR && sudo chown $USER $MODEL_CACHE_DIR" >&2
     exit 1
   }
-fi
-
-# ── MiniMax-M1 GGUF prerequisite check (Ollama path) ─────────────────────────
-# For the llama.cpp path this is handled inside download_gguf() below.
-if [[ "$MODEL_NAME" == "minimax-m1" && "$BACKEND" == "ollama" ]]; then
-  GGUF_PATH="$MODEL_CACHE_DIR/minimax-m1.gguf"
-  if [[ ! -f "$GGUF_PATH" ]]; then
-    echo "ERROR: MiniMax-M1 GGUF file not found at $GGUF_PATH" >&2
-    echo "       Download a GGUF conversion (e.g., from https://huggingface.co/bartowski)" >&2
-    echo "       and place it at: $GGUF_PATH" >&2
-    exit 1
-  fi
 fi
 
 # ── llama.cpp: VRAM tier lookup ───────────────────────────────────────────────
@@ -372,13 +358,7 @@ fi
 if [[ "$BACKEND" == "ollama" ]]; then
   echo "INFO: Loading model '$OLLAMA_ID' into Ollama..."
 
-  if [[ "$MODEL_NAME" == "minimax-m1" ]]; then
-    echo "INFO: [EXPERIMENTAL] Importing MiniMax-M1 from GGUF file..."
-    docker cp "$MODELFILE_DIR/minimax-m1.Modelfile" llm-server:/tmp/minimax-m1.Modelfile
-    docker exec llm-server ollama create minimax-m1 -f /tmp/minimax-m1.Modelfile
-  else
-    docker exec llm-server ollama pull "$OLLAMA_ID"
-  fi
+  docker exec llm-server ollama pull "$OLLAMA_ID"
 fi
 # llama.cpp: model is loaded directly from the GGUF file at container startup — no pull needed.
 

@@ -3,10 +3,14 @@
   "_readme": "Copy to ~/.config/opencode/config.json — Start the server first: ./scripts/provision.sh -m <model> — Verify model id: curl http://localhost:11434/v1/models — Model ids must match exactly (including :latest tag for Ollama; no tag for llama.cpp)",
   "_backends": "Ollama model ids use ':latest' suffix (e.g. 'glm4:latest'). llama.cpp model ids are derived from the GGUF filename without extension (e.g. 'glm-4-9b-chat-Q4_K_M'). Update the model name below to match your active backend.",
   "_llama_cpp_ids": {
-    "glm-4":       "glm-4-9b-chat-Q4_K_M",
-    "qwen3-coder": "Qwen3-Coder-Q4_K_M",
-    "deepseek-v3": "DeepSeek-V3-Q4_K_M",
-    "minimax-m1":  "minimax-m1"
+    "starcoder2-3b":       "starcoder2-3b-Q4_K_M",
+    "codellama-7b":        "CodeLlama-7B-Instruct.Q4_K_M",
+    "codegemma-7b":        "codegemma-7b-it-Q4_K_M",
+    "starcoder2-7b":       "starcoder2-7b-Q4_K_M",
+    "qwen3-coder":         "Qwen3-Coder-Q4_K_M",
+    "glm-4":               "glm-4-9b-chat-Q4_K_M",
+    "deepseek-coder-lite": "DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M",
+    "starcoder2-15b":      "starcoder2-15b-Q4_K_M"
   },
   "provider": {
     "ollama": {
@@ -16,14 +20,29 @@
         "baseURL": "http://localhost:11434/v1"
       },
       "models": {
+        "starcoder2-3b": {
+          "name": "starcoder2:3b"
+        },
+        "codellama-7b": {
+          "name": "codellama:7b-instruct"
+        },
+        "codegemma-7b": {
+          "name": "codegemma:7b"
+        },
+        "starcoder2-7b": {
+          "name": "starcoder2:7b"
+        },
         "qwen3-coder": {
           "name": "qwen3-coder:latest"
         },
         "glm4": {
           "name": "glm4:latest"
         },
-        "deepseek-v3": {
-          "name": "deepseek-v3:latest"
+        "deepseek-coder-lite": {
+          "name": "deepseek-coder-v2:16b-lite-instruct-q4_K_M"
+        },
+        "starcoder2-15b": {
+          "name": "starcoder2:15b"
         }
       }
     }
