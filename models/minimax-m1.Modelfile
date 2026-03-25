@@ -7,7 +7,7 @@
 # Prerequisites:
 #   1. Download a MiniMax-M1 GGUF file from the community (e.g., bartowski on HuggingFace)
 #   2. Place the file at: $MODEL_CACHE_DIR/minimax-m1.gguf
-#      Default path: /opt/llm-models/minimax-m1.gguf
+#      Default path: ~/.local/share/llm-models/minimax-m1.gguf
 #   3. The provision script runs `ollama create minimax-m1 -f models/minimax-m1.Modelfile`
 #      automatically when -m minimax-m1 is specified.
 #

@@ -47,7 +47,7 @@ fi
 # ── Check if anything is running ──────────────────────────────────────────────
 LLM_PORT="${LLM_PORT:-11434}"
 GPU_DEVICE_ID="${GPU_DEVICE_ID:-0}"
-MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-/opt/llm-models}"
+MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-~/.local/share/llm-models}"
 
 CONTAINER_RUNNING=false
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^llm-server$"; then
