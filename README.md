@@ -7,6 +7,7 @@ A self-hosted local LLM setup for AI-assisted coding. Runs open source models in
 | Model | VRAM (GPU) | RAM (CPU) | Notes |
 |---|---|---|---|
 | `glm-4` | ~8 GB | ~16 GB | Recommended default — practical on consumer hardware |
+| `qwen3-coder` | ~6 GB | ~12 GB | Code-specialized; recommended for coding-focused tasks |
 | `deepseek-v3` | ~80 GB | ~200 GB | High-end GPU required |
 | `minimax-m1` | ~40 GB | ~80 GB | Experimental — requires manual GGUF download |
 
@@ -60,7 +61,7 @@ curl http://localhost:11434/v1/models
 ### provision.sh options
 
 ```
--m MODEL   Model name: glm-4 | deepseek-v3 | minimax-m1
+-m MODEL   Model name: glm-4 | qwen3-coder | deepseek-v3 | minimax-m1
 -M MODE    gpu | cpu | auto (default: auto — detects GPU)
 -p PORT    Host port (default: 11434)
 -g GPU_ID  NVIDIA device index (default: 0)

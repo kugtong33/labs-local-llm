@@ -74,3 +74,10 @@ examples/
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
+
+## Active Technologies
+- Bash 5+ (shell scripts) + Existing `models/registry.conf`, `ollama/ollama:latest` (002-add-qwen3-coder)
+- One line appended to `models/registry.conf` (002-add-qwen3-coder)
+
+## Recent Changes
+- 002-add-qwen3-coder: Added Bash 5+ (shell scripts) + Existing `models/registry.conf`, `ollama/ollama:latest`
