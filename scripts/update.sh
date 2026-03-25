@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # update.sh — Pull the latest version of a model and restart the server
 #
-# Usage: update.sh -m MODEL [-M MODE] [-p PORT]
+# Usage: update.sh -m MODEL [-M MODE] [-p PORT] [-b BACKEND] [-V VRAM_TIER]
 #
 # Options:
-#   -m MODEL  Model to update (required). See models/registry.conf for supported values.
-#   -M MODE   Hardware mode after restart: gpu | cpu | auto (default: auto)
-#   -p PORT   Host port to bind after restart (default: 11434)
-#   -h        Show this help message
+#   -m MODEL      Model to update (required). See models/registry.conf for supported values.
+#   -M MODE       Hardware mode after restart: gpu | cpu | auto (default: auto)
+#   -p PORT       Host port to bind after restart (default: 11434)
+#   -b BACKEND    Inference backend: ollama | llama.cpp (default: read from .llm-state, else ollama)
+#   -V VRAM_TIER  VRAM tier for llama.cpp: 8gb | 16gb | 24gb | 32gb
+#                 (default: read from .llm-state, else 8gb)
+#   -h            Show this help message
 
 set -euo pipefail
 
@@ -19,6 +22,8 @@ REGISTRY="$PROJECT_DIR/models/registry.conf"
 MODEL_NAME=""
 MODE="auto"
 LLM_PORT="${LLM_PORT:-11434}"
+BACKEND=""
+VRAM_TIER=""
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 usage() {
@@ -27,11 +32,13 @@ usage() {
 }
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
-while getopts "m:M:p:h" opt; do
+while getopts "m:M:p:b:V:h" opt; do
   case $opt in
     m) MODEL_NAME="$OPTARG" ;;
     M) MODE="$OPTARG" ;;
     p) LLM_PORT="$OPTARG" ;;
+    b) BACKEND="$OPTARG" ;;
+    V) VRAM_TIER="$OPTARG" ;;
     h) usage ;;
     *) echo "ERROR: Unknown flag. Use -h for help." >&2; exit 1 ;;
   esac
@@ -55,6 +62,22 @@ fi
 
 OLLAMA_ID="$(echo "$REGISTRY_LINE" | awk -F'|' '{print $2}')"
 
+# ── Read backend/tier from .llm-state if not provided on command line ─────────
+STATE_FILE="$PROJECT_DIR/.llm-state"
+if [[ -z "$BACKEND" ]]; then
+  if [[ -f "$STATE_FILE" ]]; then
+    BACKEND="$(grep '^backend=' "$STATE_FILE" | cut -d= -f2 || true)"
+  fi
+  BACKEND="${BACKEND:-ollama}"
+fi
+
+if [[ -z "$VRAM_TIER" ]]; then
+  if [[ -f "$STATE_FILE" ]]; then
+    VRAM_TIER="$(grep '^vram_tier=' "$STATE_FILE" | cut -d= -f2 || true)"
+  fi
+  VRAM_TIER="${VRAM_TIER:-8gb}"
+fi
+
 # ── Check Docker ──────────────────────────────────────────────────────────────
 if ! command -v docker &>/dev/null || ! docker info &>/dev/null 2>&1; then
   echo "ERROR: Docker is not available. Ensure Docker is installed and running." >&2
@@ -67,8 +90,14 @@ if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^llm-server$"; then
   SERVER_RUNNING=true
 fi
 
-# ── Pull latest model ─────────────────────────────────────────────────────────
-if [[ "$SERVER_RUNNING" == "true" ]]; then
+# ── Update / re-provision ─────────────────────────────────────────────────────
+if [[ "$BACKEND" == "llama.cpp" ]]; then
+  # llama.cpp: re-provision with same (or new) parameters.
+  # GGUF files are static — re-provisioning will skip download if file is present.
+  # Set LLAMACPP_FORCE_DOWNLOAD=1 to force a fresh download.
+  echo "INFO: Re-provisioning '$MODEL_NAME' via llama.cpp (tier: $VRAM_TIER)..."
+  "$SCRIPT_DIR/provision.sh" -m "$MODEL_NAME" -M "$MODE" -p "$LLM_PORT" -b "$BACKEND" -V "$VRAM_TIER"
+elif [[ "$SERVER_RUNNING" == "true" ]]; then
   echo "INFO: Pulling latest version of '$OLLAMA_ID' inside running container..."
   if docker exec llm-server ollama pull "$OLLAMA_ID"; then
     echo "INFO: Model updated successfully."

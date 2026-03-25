@@ -60,10 +60,12 @@ curl http://localhost:11434/v1/models
 ### provision.sh options
 
 ```
--m MODEL   Model name: glm-4 | qwen3-coder | deepseek-v3 | minimax-m1
--M MODE    gpu | cpu | auto (default: auto — detects GPU)
--p PORT    Host port (default: 11434)
--g GPU_ID  NVIDIA device index (default: 0)
+-m MODEL      Model name: glm-4 | qwen3-coder | deepseek-v3 | minimax-m1
+-M MODE       gpu | cpu | auto (default: auto — detects GPU)
+-p PORT       Host port (default: 11434)
+-g GPU_ID     NVIDIA device index (default: 0)
+-b BACKEND    ollama | llama.cpp (default: ollama)
+-V VRAM_TIER  8gb | 16gb | 24gb | 32gb (default: 8gb, llama.cpp only)
 ```
 
 ### clean.sh options
@@ -86,6 +88,64 @@ Ready-to-use config files are in [`examples/`](examples/):
 | OpenCode | [`examples/opencode/config.toml`](examples/opencode/config.toml) | Copy to `~/.config/opencode/config.toml` |
 | Continue | [`examples/continue/config.json`](examples/continue/config.json) | Merge into `~/.continue/config.json` |
 | Aider | [`examples/aider/.aider.conf.yml`](examples/aider/.aider.conf.yml) | Copy to project root as `.aider.conf.yml` |
+
+## llama.cpp Backend
+
+In addition to Ollama, you can run models via [llama.cpp](https://github.com/ggml-org/llama.cpp) for direct GGUF inference. Use the `-b llama.cpp` flag. The same OpenAI-compatible API is available at the same endpoint.
+
+### VRAM tier selection
+
+The `-V` flag selects a pre-set configuration tuned for your GPU memory budget. The 8 GB tier is the default.
+
+| Tier | Context | Use when |
+|------|---------|----------|
+| `8gb` (default) | 2 K tokens | 8 GB GPU — conservative, broad hardware support |
+| `16gb` | 8 K tokens | 16 GB GPU — standard performance |
+| `24gb` | 16 K tokens | 24 GB GPU — large context workloads |
+| `32gb` | 32 K tokens | 32 GB GPU — maximum context / throughput |
+
+### Quick start with llama.cpp
+
+```bash
+# Start glm-4 via llama.cpp on an 8 GB GPU (GGUF auto-downloaded)
+./scripts/provision.sh -m glm-4 -b llama.cpp
+
+# 16 GB GPU — unlock 8 K context window
+./scripts/provision.sh -m glm-4 -b llama.cpp -V 16gb
+
+# 24 GB GPU
+./scripts/provision.sh -m glm-4 -b llama.cpp -V 24gb
+
+# 32 GB GPU — maximum context
+./scripts/provision.sh -m glm-4 -b llama.cpp -V 32gb
+
+# Force CPU mode
+./scripts/provision.sh -m glm-4 -b llama.cpp -M cpu
+```
+
+### Per-model minimum VRAM tier
+
+| Model | Min tier | Notes |
+|-------|----------|-------|
+| `glm-4` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `qwen3-coder` | `8gb` | GGUF auto-downloaded from HuggingFace on first run |
+| `minimax-m1` | `24gb` | User must provide GGUF manually (see section below) |
+| `deepseek-v3` | `32gb` | ~400 GB GGUF — significant download and storage required |
+
+### API endpoint with llama.cpp
+
+The API endpoint is identical: `http://localhost:11434/v1`. The model `id` returned by `GET /v1/models` differs from Ollama:
+
+| Model | Ollama id | llama.cpp id |
+|-------|-----------|--------------|
+| `glm-4` | `glm4:latest` | `glm-4-9b-chat-Q4_K_M` |
+| `qwen3-coder` | `qwen3-coder:latest` | `Qwen3-Coder-Q4_K_M` |
+| `deepseek-v3` | `deepseek-v3:latest` | `DeepSeek-V3-Q4_K_M` |
+| `minimax-m1` | `minimax-m1:latest` | `minimax-m1` |
+
+Update your agent config's model name to match when switching backends.
+
+---
 
 ## MiniMax-M1 (Experimental)
 

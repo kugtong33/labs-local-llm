@@ -1,7 +1,7 @@
 version: "3.8"
 
-# ── Shared configuration ───────────────────────────────────────────────────────
-# Both service variants (GPU and CPU) inherit this block via YAML anchors.
+# ── Shared configuration: Ollama ──────────────────────────────────────────────
+# Both Ollama service variants (GPU and CPU) inherit this block via YAML anchors.
 x-llm-base: &llm-base
   image: ollama/ollama:latest
   container_name: llm-server
@@ -24,9 +24,39 @@ x-llm-base: &llm-base
     retries: 10
     start_period: 180s
 
+# ── Shared configuration: llama.cpp ───────────────────────────────────────────
+# Both llama.cpp service variants inherit this block.
+# Parameterized via LLAMACPP_* environment variables exported by provision.sh.
+# Port: maps host ${LLM_PORT:-11434} → container 8080 (llama-server default).
+# Health check: /v1/models returns 200 only when model is fully loaded.
+x-llamacpp-base: &llamacpp-base
+  container_name: llm-server
+  ports:
+    - "${LLM_PORT:-11434}:8080"
+  volumes:
+    - model-cache:/models
+  environment:
+    - HF_TOKEN=${HF_TOKEN:-}
+  command: >
+    --model /models/${LLAMACPP_MODEL_FILE}
+    --host 0.0.0.0
+    --port 8080
+    --ctx-size ${LLAMACPP_CTX_SIZE:-2048}
+    --n-gpu-layers ${LLAMACPP_N_GPU_LAYERS:-99}
+    --batch-size ${LLAMACPP_BATCH_SIZE:-512}
+    --ubatch-size ${LLAMACPP_UBATCH_SIZE:-128}
+    --cont-batching
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "curl -sf http://localhost:8080/v1/models || exit 1"]
+    interval: 30s
+    timeout: 10s
+    retries: 10
+    start_period: 180s
+
 services:
 
-  # ── GPU variant ───────────────────────────────────────────────────────────────
+  # ── Ollama GPU variant ────────────────────────────────────────────────────────
   # Activate with: docker compose --profile gpu up -d
   # Requires NVIDIA Container Toolkit on the host.
   llm-gpu:
@@ -40,18 +70,43 @@ services:
               device_ids: ["${GPU_DEVICE_ID:-0}"]
               capabilities: [gpu]
 
-  # ── CPU-only variant ──────────────────────────────────────────────────────────
+  # ── Ollama CPU-only variant ───────────────────────────────────────────────────
   # Activate with: docker compose --profile cpu up -d
   # Works on any machine without a GPU.
   llm-cpu:
     <<: *llm-base
     profiles: [cpu]
 
+  # ── llama.cpp GPU variant ─────────────────────────────────────────────────────
+  # Activate with: docker compose --profile llamacpp-gpu up -d
+  # Requires NVIDIA Container Toolkit on the host.
+  # Set LLAMACPP_MODEL_FILE, LLAMACPP_CTX_SIZE, etc. before invoking.
+  llm-llamacpp-gpu:
+    <<: *llamacpp-base
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    profiles: [llamacpp-gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GPU_DEVICE_ID:-0}"]
+              capabilities: [gpu]
+
+  # ── llama.cpp CPU-only variant ────────────────────────────────────────────────
+  # Activate with: docker compose --profile llamacpp-cpu up -d
+  # Works on any machine without a GPU.
+  llm-llamacpp-cpu:
+    <<: *llamacpp-base
+    image: ghcr.io/ggml-org/llama.cpp:server
+    profiles: [llamacpp-cpu]
+
 # ── Volumes ───────────────────────────────────────────────────────────────────
 # model-cache persists model weights across container restarts.
 # It survives `docker compose down` but is removed by `clean.sh --purge-models`.
 # MODEL_CACHE_DIR is always exported by provision.sh before invoking Docker Compose.
 # Default (set in provision.sh): ~/.local/share/llm-models
+# For llama.cpp, GGUF files are stored in the same directory.
 volumes:
   model-cache:
     driver: local

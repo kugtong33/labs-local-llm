@@ -64,12 +64,17 @@ echo "INFO: Stopping LLM server..."
 if [[ "$PURGE_MODELS" == "true" ]]; then
   (cd "$PROJECT_DIR" && \
     MODEL_CACHE_DIR="$MODEL_CACHE_DIR" LLM_PORT="$LLM_PORT" GPU_DEVICE_ID="$GPU_DEVICE_ID" \
-    docker compose --profile gpu --profile cpu down --volumes --remove-orphans 2>/dev/null) || true
+    docker compose --profile gpu --profile cpu --profile llamacpp-gpu --profile llamacpp-cpu \
+    down --volumes --remove-orphans 2>/dev/null) || true
 else
   (cd "$PROJECT_DIR" && \
     MODEL_CACHE_DIR="$MODEL_CACHE_DIR" LLM_PORT="$LLM_PORT" GPU_DEVICE_ID="$GPU_DEVICE_ID" \
-    docker compose --profile gpu --profile cpu down --remove-orphans 2>/dev/null) || true
+    docker compose --profile gpu --profile cpu --profile llamacpp-gpu --profile llamacpp-cpu \
+    down --remove-orphans 2>/dev/null) || true
 fi
+
+# Remove runtime state file (tracks active backend/model/tier)
+rm -f "$PROJECT_DIR/.llm-state"
 
 # ── Report ────────────────────────────────────────────────────────────────────
 if [[ "$CONTAINER_RUNNING" == "true" ]]; then

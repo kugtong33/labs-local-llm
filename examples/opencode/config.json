@@ -1,6 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "_readme": "Copy to ~/.config/opencode/config.json — Start the server first: ./scripts/provision.sh -m <model> — Verify model id: curl http://localhost:11434/v1/models — Model ids must match exactly (including :latest tag)",
+  "_readme": "Copy to ~/.config/opencode/config.json — Start the server first: ./scripts/provision.sh -m <model> — Verify model id: curl http://localhost:11434/v1/models — Model ids must match exactly (including :latest tag for Ollama; no tag for llama.cpp)",
+  "_backends": "Ollama model ids use ':latest' suffix (e.g. 'glm4:latest'). llama.cpp model ids are derived from the GGUF filename without extension (e.g. 'glm-4-9b-chat-Q4_K_M'). Update the model name below to match your active backend.",
+  "_llama_cpp_ids": {
+    "glm-4":       "glm-4-9b-chat-Q4_K_M",
+    "qwen3-coder": "Qwen3-Coder-Q4_K_M",
+    "deepseek-v3": "DeepSeek-V3-Q4_K_M",
+    "minimax-m1":  "minimax-m1"
+  },
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",

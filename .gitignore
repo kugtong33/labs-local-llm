@@ -2,6 +2,9 @@
 .opencode
 *.notes
 
+# Runtime state (tracks active backend/model/tier)
+.llm-state
+
 # Environment configuration (contains secrets)
 .env
 

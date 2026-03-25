@@ -18,7 +18,28 @@ for arg in "$@"; do
   esac
 done
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+VRAM_TIERS="$PROJECT_DIR/models/vram-tiers.conf"
+
 LLM_PORT="${LLM_PORT:-11434}"
+
+# ── Read runtime state file ───────────────────────────────────────────────────
+# Use grep (not source) to avoid executing arbitrary content.
+STATE_FILE="$PROJECT_DIR/.llm-state"
+STATE_BACKEND=""
+STATE_VRAM_TIER=""
+STATE_VRAM_DESC=""
+
+if [[ -f "$STATE_FILE" ]]; then
+  STATE_BACKEND="$(grep '^backend=' "$STATE_FILE" | cut -d= -f2)"
+  STATE_VRAM_TIER="$(grep '^vram_tier=' "$STATE_FILE" | cut -d= -f2 || true)"
+
+  # Look up tier description from vram-tiers.conf
+  if [[ -n "$STATE_VRAM_TIER" && -f "$VRAM_TIERS" ]]; then
+    STATE_VRAM_DESC="$(awk -F'|' -v t="$STATE_VRAM_TIER" '!/^#/ && !/^$/ && $1 == t {print $6; exit}' "$VRAM_TIERS" 2>/dev/null || true)"
+  fi
+fi
 
 # ── Check if container is running ────────────────────────────────────────────
 if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^llm-server$"; then
@@ -98,6 +119,19 @@ fi
 LINE="═══════════════════════════════════════════════════════"
 echo "╔${LINE}╗"
 printf "║  %-20s %-34s║\n" "Model:"     "$MODEL_ID"
+
+# Show backend and VRAM tier when state file is present
+if [[ -n "$STATE_BACKEND" ]]; then
+  printf "║  %-20s %-34s║\n" "Backend:"   "$STATE_BACKEND"
+  if [[ -n "$STATE_VRAM_TIER" ]]; then
+    TIER_DISPLAY="${STATE_VRAM_TIER}"
+    if [[ -n "$STATE_VRAM_DESC" ]]; then
+      TIER_DISPLAY="${STATE_VRAM_TIER} — ${STATE_VRAM_DESC}"
+    fi
+    printf "║  %-20s %-34s║\n" "VRAM Tier:" "$TIER_DISPLAY"
+  fi
+fi
+
 printf "║  %-20s %-34s║\n" "Port:"      "$LLM_PORT"
 printf "║  %-20s %-34s║\n" "Endpoint:"  "http://localhost:${LLM_PORT}/v1"
 printf "║  %-20s %-34s║\n" "Uptime:"    "$UPTIME_STR"
