@@ -1,0 +1,60 @@
+version: "3.8"
+
+# ── Shared configuration ───────────────────────────────────────────────────────
+# Both service variants (GPU and CPU) inherit this block via YAML anchors.
+x-llm-base: &llm-base
+  image: ollama/ollama:latest
+  container_name: llm-server
+  ports:
+    - "${LLM_PORT:-11434}:11434"
+  volumes:
+    - model-cache:/root/.ollama
+  environment:
+    - OLLAMA_HOST=0.0.0.0
+    - OLLAMA_MAX_LOADED_MODELS=1
+    - OLLAMA_KEEP_ALIVE=24h
+    - OLLAMA_ORIGINS=*
+    - OLLAMA_MODELS=/root/.ollama/models
+    - HF_TOKEN=${HF_TOKEN:-}
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "curl -sf http://localhost:11434/ || exit 1"]
+    interval: 30s
+    timeout: 10s
+    retries: 10
+    start_period: 180s
+
+services:
+
+  # ── GPU variant ───────────────────────────────────────────────────────────────
+  # Activate with: docker compose --profile gpu up -d
+  # Requires NVIDIA Container Toolkit on the host.
+  llm-gpu:
+    <<: *llm-base
+    profiles: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GPU_DEVICE_ID:-0}"]
+              capabilities: [gpu]
+
+  # ── CPU-only variant ──────────────────────────────────────────────────────────
+  # Activate with: docker compose --profile cpu up -d
+  # Works on any machine without a GPU.
+  llm-cpu:
+    <<: *llm-base
+    profiles: [cpu]
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+# model-cache persists model weights across container restarts.
+# It survives `docker compose down` but is removed by `clean.sh --purge-models`.
+# The host path is controlled by MODEL_CACHE_DIR in .env (default: /opt/llm-models).
+volumes:
+  model-cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${MODEL_CACHE_DIR:-/opt/llm-models}"

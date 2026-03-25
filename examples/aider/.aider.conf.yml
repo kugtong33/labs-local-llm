@@ -1,0 +1,30 @@
+# Aider — Local LLM Configuration
+#
+# Place this file in your project root as: .aider.conf.yml
+# Or use environment variables:
+#   export OPENAI_API_BASE=http://localhost:11434/v1
+#   export OPENAI_API_KEY=local
+#   aider --model openai/glm4:latest
+#
+# IMPORTANT: The 'openai/' prefix is required — it tells Aider to route
+# through the OpenAI-compatible adapter regardless of the model name.
+# Without it, Aider looks up the model in its known-models registry and may error.
+#
+# IMPORTANT: The model string after 'openai/' must match the id returned by:
+#   curl http://localhost:11434/v1/models
+# After provisioning glm-4: openai/glm4:latest
+# After provisioning deepseek-v3: openai/deepseek-v3:latest
+#
+# Start the server first: ./scripts/provision.sh -m glm-4
+
+model: openai/glm4:latest
+openai-api-base: http://localhost:11434/v1
+openai-api-key: local
+
+# Context window — set to match model capability.
+# glm-4: 128k context, but limit to 32k for practical response speed.
+# deepseek-v3: 128k context.
+max-tokens: 32768
+
+# Increase timeout for local inference (can be slower than cloud APIs)
+# timeout: 120

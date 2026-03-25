@@ -1,0 +1,30 @@
+.claude
+.opencode
+*.notes
+
+# Environment configuration (contains secrets)
+.env
+
+# Model weight files (large binary files)
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Model cache directories
+/models/cache/
+/models/gguf/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/

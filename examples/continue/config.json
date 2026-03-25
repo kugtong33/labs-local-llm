@@ -1,0 +1,30 @@
+{
+  "_comment": "Continue (VS Code extension) — Local LLM Configuration",
+  "_instructions": [
+    "Merge the 'models' entry below into your ~/.continue/config.json",
+    "Then select 'Local GLM-4' from the Continue model picker in VS Code.",
+    "IMPORTANT: 'model' must match the id returned by: curl http://localhost:11434/v1/models",
+    "Start the server first: ./scripts/provision.sh -m glm-4"
+  ],
+  "models": [
+    {
+      "title": "Local GLM-4",
+      "provider": "openai",
+      "model": "glm4:latest",
+      "apiBase": "http://localhost:11434/v1",
+      "apiKey": "local",
+      "contextLength": 32768,
+      "completionOptions": {
+        "temperature": 0.2,
+        "maxTokens": 4096
+      }
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Local GLM-4 Autocomplete",
+    "provider": "openai",
+    "model": "glm4:latest",
+    "apiBase": "http://localhost:11434/v1",
+    "apiKey": "local"
+  }
+}
