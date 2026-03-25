@@ -50,11 +50,12 @@ services:
 # ── Volumes ───────────────────────────────────────────────────────────────────
 # model-cache persists model weights across container restarts.
 # It survives `docker compose down` but is removed by `clean.sh --purge-models`.
-# The host path is controlled by MODEL_CACHE_DIR in .env (default: /opt/llm-models).
+# MODEL_CACHE_DIR is always exported by provision.sh before invoking Docker Compose.
+# Default (set in provision.sh): ~/.local/share/llm-models
 volumes:
   model-cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: "${MODEL_CACHE_DIR:-/opt/llm-models}"
+      device: "${MODEL_CACHE_DIR}"

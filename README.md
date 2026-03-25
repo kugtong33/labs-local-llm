@@ -40,7 +40,6 @@ chmod +x scripts/*.sh
 
 # 2. Configure (optional — defaults work for most setups)
 cp .env.example .env
-# Edit .env to change MODEL_CACHE_DIR if /opt/llm-models is not writable
 
 # 3. Start GLM-4 (GPU auto-detected, falls back to CPU)
 ./scripts/provision.sh -m glm-4
@@ -94,8 +93,8 @@ MiniMax-M1 requires a manual GGUF download (not in Ollama library):
 
 ```bash
 # 1. Download a GGUF from HuggingFace (e.g., bartowski/MiniMax-M1-GGUF)
-# 2. Place the file at your MODEL_CACHE_DIR (default: /opt/llm-models)
-cp minimax-m1.Q4_K_M.gguf /opt/llm-models/minimax-m1.gguf
+# 2. Place the file in MODEL_CACHE_DIR (default: ~/.local/share/llm-models)
+cp minimax-m1.Q4_K_M.gguf ~/.local/share/llm-models/minimax-m1.gguf
 # 3. Provision
 ./scripts/provision.sh -m minimax-m1
 ```

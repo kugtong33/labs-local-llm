@@ -163,7 +163,7 @@ else
 fi
 
 # ── Ensure MODEL_CACHE_DIR exists ─────────────────────────────────────────────
-MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-/opt/llm-models}"
+MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-${HOME}/.local/share/llm-models}"
 if [[ ! -d "$MODEL_CACHE_DIR" ]]; then
   echo "INFO: Creating model cache directory: $MODEL_CACHE_DIR"
   mkdir -p "$MODEL_CACHE_DIR" || {
