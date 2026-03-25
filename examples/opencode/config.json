@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "_readme": "Copy to ~/.config/opencode/config.json — Start the server first: ./scripts/provision.sh -m <model> — Verify model id: curl http://localhost:11434/v1/models — Model ids must match exactly (including :latest tag)",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen3-coder": {
+          "name": "qwen3-coder:latest"
+        },
+        "glm4": {
+          "name": "glm4:latest"
+        },
+        "deepseek-v3": {
+          "name": "deepseek-v3:latest"
+        }
+      }
+    }
+  }
+}
